@@ -6,11 +6,18 @@ import {getAuth,
         GoogleAuthProvider,
         createUserWithEmailAndPassword,
         signOut,
-        onAuthStateChanged
+        onAuthStateChanged,
     } from 'firebase/auth'
 
 import {
-    getFirestore,doc,getDoc,setDoc
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    collection,
+    writeBatch,
+    query,
+    getDocs
 } from 'firebase/firestore'
 
 //web app's Firebase configuration
@@ -21,26 +28,52 @@ const firebaseConfig = {
     storageBucket: "crwn-clothing-db-a8823.appspot.com",
     messagingSenderId: "966178974010",
     appId: "1:966178974010:web:57188382487a5b653f8803"
-  };
+};
   
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-  const googleProvider= new GoogleAuthProvider();
+const googleProvider= new GoogleAuthProvider();
 
-  googleProvider.setCustomParameters({
+googleProvider.setCustomParameters({
     prompt:'select_account'
-  });
+});
 
-  export const auth = getAuth();
+export const auth = getAuth();
+export const db = getFirestore();
 
-  export const signInWithGooglePopup = () => signInWithPopup(auth,googleProvider);
+export const signInWithGooglePopup = () => signInWithPopup(auth,googleProvider);
 
-  export const signInWithGoogleRedirect = () => signInWithRedirect(auth,googleProvider);
+export const signInWithGoogleRedirect = () => signInWithRedirect(auth,googleProvider);
 
-  export const db = getFirestore();
+export const addCollectionAndDocuments = async (collectionKey, objectsToAdd) => {
+    const collectionRef = collection(db,collectionKey);
+    const batch = writeBatch(db);
+    
+    objectsToAdd.forEach(object => {
+        const docRef = doc(collectionRef,object.title.toLowerCase())
+        batch.set(docRef,object)
+    });
 
-  export const createUserDocumentFromAuth = async (userAuth,additionalInformation={}) =>{
+    await batch.commit();
+    console.log('done');
+  }
+
+export const getCategoriesAndDocuments = async () =>{
+    const collectionRef = collection(db,'categories');
+    const q = query(collectionRef);
+
+    const querySnapshot = await getDocs(q);
+    const categoryMap = querySnapshot.docs.reduce((acc,docSnapshot) => {
+        const {title,items} = docSnapshot.data();
+        acc[title.toLowerCase()]=items;
+        return acc;
+    },{})
+
+    return categoryMap;
+}
+
+export const createUserDocumentFromAuth = async (userAuth,additionalInformation={}) =>{
     
     if(!userAuth) return;
 
