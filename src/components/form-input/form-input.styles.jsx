@@ -3,9 +3,10 @@ import styled, { css } from 'styled-components';
 const subColor = 'grey';
 const mainColor = 'black';
 
+//like a mixin
 const shrinkLabelStyles = css`
   top: -14px;
-  font-size: 12px;
+  font-size: 12px; 
   color: ${mainColor};
 `;
 
